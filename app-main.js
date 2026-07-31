@@ -3,6 +3,7 @@ import { OrbitControls } from './vendor/OrbitControls.js';
 import { BLOCK_TYPES, COLORS, LAYER_HEIGHT, MAX_UNDO, SNAP, THICKNESS } from './config.js?v=color-palette-1';
 import { shapeEdgesForType, shapeOutlinePoints, semicircleOutlinePoints } from './shape-utils.js?v=color-palette-1';
 import { boxTemplate } from './templates.js?v=cube-json-1';
+import { createImageScanner } from './image-scanner.js?v=image-scan-1';
 import { createVideoScanner } from './video-scanner.js?v=video-scan-2';
 import {
   edgeColor,
@@ -155,6 +156,7 @@ let animationId;
 let pointerDown = null;
 let toastTimer;
 let videoScanner;
+let imageScanner;
 
 init();
 
@@ -168,6 +170,7 @@ function init() {
   buildColors();
   bindEvents();
   initVideoScanner();
+  initImageScanner();
   loadStarterModel();
   rebuildScene();
   updateEverything();
@@ -178,13 +181,23 @@ function initVideoScanner() {
   videoScanner = createVideoScanner({
     blockTypes: BLOCK_TYPES,
     colors: COLORS,
-    onApply: applyVideoScanBlocks,
+    onApply: (blocks, diagnostics) => applyScanBlocks(blocks, { ...diagnostics, source: 'video' }),
   });
 }
 
-function applyVideoScanBlocks(blocks, diagnostics = {}) {
+function initImageScanner() {
+  imageScanner = createImageScanner({
+    blockTypes: BLOCK_TYPES,
+    colors: COLORS,
+    onApply: applyScanBlocks,
+  });
+}
+
+function applyScanBlocks(blocks, diagnostics = {}) {
+  const isImage = diagnostics.source === 'image';
+  const sourceLabel = isImage ? 'Görsel' : 'Video';
   if (!Array.isArray(blocks) || !blocks.length) {
-    setStatus('Video analizinde aktarılacak blok bulunamadı', 'error');
+    setStatus(`${sourceLabel} analizinde aktarılacak blok bulunamadı`, 'error');
     return;
   }
 
@@ -196,7 +209,7 @@ function applyVideoScanBlocks(blocks, diagnostics = {}) {
   ));
 
   if (!accepted.length) {
-    setStatus('Video sonucu geçerli blok içermiyor', 'error');
+    setStatus(`${sourceLabel} sonucu geçerli blok içermiyor`, 'error');
     return;
   }
 
@@ -213,9 +226,9 @@ function applyVideoScanBlocks(blocks, diagnostics = {}) {
     state.selectedId = state.blocks[0]?.id || null;
     state.selectedIds = state.selectedId ? [state.selectedId] : [];
     state.pendingAttach = null;
-    dom.modelName.value = videoModelName(diagnostics.fileName);
+    dom.modelName.value = scanModelName(diagnostics.fileName, isImage);
     dom.estimatedTime.value = `${Math.max(3, Math.ceil(state.blocks.length / 5))} dk`;
-  }, 'Video analizi sahneye aktarıldı', { enforceAutoSymmetry: false });
+  }, `${sourceLabel} analizi sahneye aktarıldı`, { enforceAutoSymmetry: false });
 
   const rejected = blocks.length - accepted.length;
   const warningCount = diagnostics.warnings?.length || 0;
@@ -224,12 +237,13 @@ function applyVideoScanBlocks(blocks, diagnostics = {}) {
   }
 }
 
-function videoModelName(fileName) {
+function scanModelName(fileName, isImage = false) {
   const base = String(fileName || '')
     .replace(/\.[^.]+$/, '')
     .replace(/[-_]+/g, ' ')
     .trim();
-  return base ? `${base} · Video Modeli` : 'Videodan Oluşturulan Model';
+  if (base) return `${base} · ${isImage ? 'Görsel' : 'Video'} Modeli`;
+  return isImage ? 'Görselden Oluşturulan Model' : 'Videodan Oluşturulan Model';
 }
 
 function byId(id) {
@@ -525,6 +539,7 @@ function bindEvents() {
     cancelAnimationFrame(animationId);
     resizeObserver?.disconnect();
     videoScanner?.destroy();
+    imageScanner?.destroy();
   });
 }
 

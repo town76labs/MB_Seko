@@ -467,7 +467,7 @@ function normalizeScene(blocks, catalogue, snapSize) {
 }
 
 function buildWarnings(frameAnalyses, blocks, pixelsPerUnit) {
-  const warnings = ['Tamamen kapalı veya hiçbir görünüşte seçilemeyen bloklar videodan doğrulanamaz.'];
+  const warnings = ['Tamamen kapalı veya hiçbir görünüşte seçilemeyen bloklar görüntülerden doğrulanamaz.'];
   const views = new Set(Object.keys(frameAnalyses));
   if (!views.has('front') && !views.has('back')) warnings.push('Ön veya arka görünüş olmadan X/Y konumları zayıf kalır.');
   if (!views.has('right') && !views.has('left')) warnings.push('Sağ veya sol görünüş olmadan Z/Y konumları zayıf kalır.');

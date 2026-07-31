@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MagneticBlox 3D Model Oluşturucu</title>
-  <link rel="stylesheet" href="styles.css?v=login-gate-1" />
+  <link rel="stylesheet" href="styles.css?v=image-scan-1" />
 </head>
 <body class="auth-locked">
   <div class="login-gate" id="loginGate" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
@@ -58,6 +58,7 @@
           <button class="icon" id="mirrorZBtn" title="Z aynala" aria-label="Z aynala">⇅</button>
         </div>
         <div class="toolbar-group">
+          <button id="imageScanBtn" class="primary" title="Bir veya daha fazla fotoğraftan blok modeli çıkar">Görselden Oluştur</button>
           <button id="videoScanBtn" class="primary" title="Yönlendirilmiş videodan blokları ve JSON'u çıkar">Videodan Oluştur</button>
           <button id="validateBtn">Doğrula</button>
           <button id="fixEdgesBtn" title="Yakın duran tüm kenarları modele eşit dağıtarak hizala">Kenarları Sıkıştır</button>
@@ -436,9 +437,96 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="imageScanModal" aria-hidden="true">
+    <div class="modal video-scan-modal image-scan-modal" role="dialog" aria-modal="true" aria-labelledby="imageScanTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="imageScanTitle">Görselden MagneticBlox Modeli</h2>
+          <p class="modal-subtitle">Tek fotoğrafla yaklaşık model veya farklı açılardan en fazla 5 fotoğrafla birleştirilmiş 3B model oluşturur.</p>
+        </div>
+        <button class="icon" id="closeImageScanBtn" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body video-scan-body image-scan-body">
+        <section class="video-source-panel">
+          <label class="video-dropzone" id="imageDropzone" for="imageFileInput">
+            <input id="imageFileInput" type="file" accept="image/*" multiple />
+            <strong>Fotoğraf seçin veya buraya bırakın</strong>
+            <span>PNG, JPG, WebP veya tarayıcının açabildiği başka bir görsel · önden, sağdan ve üstten çekimler doğruluğu artırır · dosyalar cihazınızdan dışarı gönderilmez</span>
+          </label>
+
+          <div class="video-workspace image-workspace" id="imageWorkspace" hidden>
+            <div class="capture-help build-video-help">
+              Her görselin açısını doğru seçin. Model kadrajı doldurmalı; sade arka plan, gölgesiz ışık ve birbirinden ayırt edilebilir blok renkleri en iyi sonucu verir.
+            </div>
+            <div class="image-preview-grid" id="imagePreviewGrid"></div>
+            <div class="image-source-actions">
+              <span id="imageCountLabel">0/5 görünüş</span>
+              <div class="button-row">
+                <button id="addImagesBtn" type="button">Görsel Ekle</button>
+                <button id="clearImagesBtn" type="button">Tümünü Temizle</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="video-settings-panel">
+          <h3>Analiz Ayarları</h3>
+          <div class="field">
+            <label for="imageColorTolerance">Renk toleransı <output id="imageColorToleranceValue">26%</output></label>
+            <input id="imageColorTolerance" type="range" min="8" max="42" step="1" value="26" />
+          </div>
+          <div class="field">
+            <label for="imageMinRegion">En küçük renk alanı</label>
+            <input id="imageMinRegion" type="number" min="12" max="5000" step="10" value="42" />
+          </div>
+          <div class="field">
+            <label for="imagePixelsPerUnit">Piksel / temel blok <span class="label-note">0 = otomatik</span></label>
+            <input id="imagePixelsPerUnit" type="number" min="0" max="1000" step="1" value="0" />
+          </div>
+          <div class="scan-progress" aria-live="polite">
+            <div class="scan-progress-head">
+              <span id="imageScanStatus">Görsel bekleniyor</span>
+              <strong id="imageScanProgressText">0%</strong>
+            </div>
+            <div class="scan-progress-track"><span id="imageScanProgressBar"></span></div>
+          </div>
+          <ul class="scan-warnings" id="imageScanWarnings"></ul>
+        </aside>
+
+        <section class="video-results-panel image-results-panel" id="imageResultsPanel" hidden>
+          <div class="video-results-head">
+            <div>
+              <h3>Algılanan Bloklar</h3>
+              <span id="imageResultSummary">Henüz analiz edilmedi</span>
+            </div>
+            <div class="confidence-legend">
+              <span class="confidence-dot high"></span>Güçlü
+              <span class="confidence-dot medium"></span>Kontrol
+              <span class="confidence-dot low"></span>Zayıf
+            </div>
+          </div>
+          <div class="video-result-table-wrap">
+            <table class="video-result-table image-result-table">
+              <thead>
+                <tr><th>#</th><th>Tip</th><th>Renk</th><th>Yön</th><th>X</th><th>Y</th><th>Z</th><th>Güven</th><th></th></tr>
+              </thead>
+              <tbody id="imageResultRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="modal-foot video-scan-foot">
+        <span class="image-privacy-note">Yerel analiz · görseller yüklenmez</span>
+        <button id="cancelImageScanBtn">Vazgeç</button>
+        <button id="analyzeImageBtn" class="primary" disabled>Görselleri Analiz Et</button>
+        <button id="applyImageResultBtn" class="primary" disabled>Sahneye Aktar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
     <script src="auth.js?v=login-gate-1"></script>
-    <script type="module" src="app.js?v=right-triangle-vertical-2"></script>
+    <script type="module" src="app.js?v=image-scan-1"></script>
 </body>
 </html>
