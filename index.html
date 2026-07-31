@@ -4,10 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MagneticBlox 3D Model Oluşturucu</title>
-  <link rel="stylesheet" href="styles.css?v=responsive-panel-1" />
+  <link rel="stylesheet" href="styles.css?v=login-gate-1" />
 </head>
-<body>
-  <div class="app">
+<body class="auth-locked">
+  <div class="login-gate" id="loginGate" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <form class="login-card" id="loginForm" novalidate>
+      <div class="login-brand" aria-hidden="true">
+        <span class="brand-mark"></span>
+      </div>
+      <p class="login-eyebrow">MAGNETICBLOX STUDIO</p>
+      <h1 id="loginTitle">Giriş yap</h1>
+      <p class="login-copy">Model oluşturucuya devam etmek için kullanıcı bilgilerinizi girin.</p>
+
+      <label class="login-field" for="loginUsername">
+        <span>Kullanıcı adı</span>
+        <input id="loginUsername" name="username" type="text" autocomplete="username" required autofocus />
+      </label>
+
+      <label class="login-field" for="loginPassword">
+        <span>Şifre</span>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+      </label>
+
+      <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
+      <button class="primary login-submit" id="loginSubmit" type="submit">Giriş</button>
+    </form>
+  </div>
+
+  <div class="app" id="appRoot" aria-hidden="true" inert>
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"></div>
@@ -41,6 +65,7 @@
       </div>
       <div class="toolbar" role="status">
         <button id="clearBtn" class="warn">Temizle</button>
+        <button id="logoutBtn" title="Oturumu kapat">Çıkış</button>
         <div class="status-pill good" id="snapStatus">
           <span class="status-dot"></span>
           <span id="snapText">Hazır</span>
@@ -413,6 +438,7 @@
 
   <div class="toast" id="toast"></div>
 
+    <script src="auth.js?v=login-gate-1"></script>
     <script type="module" src="app.js?v=right-triangle-vertical-2"></script>
 </body>
 </html>
