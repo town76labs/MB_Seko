@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MagneticBlox 3D Model Oluşturucu</title>
+  <link rel="stylesheet" href="styles.css?v=responsive-panel-1" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <h1>MagneticBlox Studio</h1>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Sahne araçları">
+        <div class="toolbar-group">
+          <button class="icon" id="undoBtn" title="Geri al" aria-label="Geri al">↶</button>
+          <button class="icon" id="redoBtn" title="İleri al" aria-label="İleri al">↷</button>
+          <button class="icon" id="duplicateBtn" title="Çoğalt" aria-label="Çoğalt">⧉</button>
+          <button class="icon danger" id="deleteBtn" title="Sil" aria-label="Sil">⌫</button>
+        </div>
+        <div class="toolbar-group">
+          <button id="pyramidOnSquareBtn" title="Seçili karenin üstüne 4 üçgenden tam piramit kurar (Shift+tık: ters tarafa)">Kareye Piramit</button>
+          <button id="pyramidOnTriangleBtn" title="Seçili eşkenar üçgenin üstüne 3 üçgenden tam piramit kurar (Shift+tık: ters tarafa)">Üçgene Piramit</button>
+          <button id="longPyramidOnSquareBtn" title="Seçili karenin üstüne 4 uzun üçgenden piramit kurar (Shift+tık: ters tarafa)">Kareye Uzun Piramit</button>
+          <button id="longPyramidOnTriangleBtn" title="Seçili eşkenar üçgenin üstüne 3 uzun üçgenden piramit kurar (Shift+tık: ters tarafa)">Üçgene Uzun Piramit</button>
+        </div>
+        <div class="toolbar-group">
+          <button class="icon" id="rotateXBtn" title="Seçili pivotla X ekseninde döndür" aria-label="Seçili pivotla X ekseninde döndür">X</button>
+          <button class="icon" id="rotateYBtn" title="Seçili pivotla Y ekseninde döndür" aria-label="Seçili pivotla Y ekseninde döndür">Y</button>
+          <button class="icon" id="rotateZBtn" title="Seçili pivotla Z ekseninde döndür" aria-label="Seçili pivotla Z ekseninde döndür">Z</button>
+          <button class="icon" id="mirrorXBtn" title="X aynala" aria-label="X aynala">⇄</button>
+          <button class="icon" id="mirrorZBtn" title="Z aynala" aria-label="Z aynala">⇅</button>
+        </div>
+        <div class="toolbar-group">
+          <button id="videoScanBtn" class="primary" title="Yönlendirilmiş videodan blokları ve JSON'u çıkar">Videodan Oluştur</button>
+          <button id="validateBtn">Doğrula</button>
+          <button id="fixEdgesBtn" title="Yakın duran tüm kenarları modele eşit dağıtarak hizala">Kenarları Sıkıştır</button>
+        </div>
+      </div>
+      <div class="toolbar" role="status">
+        <button id="clearBtn" class="warn">Temizle</button>
+        <div class="status-pill good" id="snapStatus">
+          <span class="status-dot"></span>
+          <span id="snapText">Hazır</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="side left">
+      <div class="scroll">
+        <section class="section">
+          <h2 class="section-title">Bloklar</h2>
+          <div class="palette" id="palette"></div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Renk</h2>
+          <div class="colors" id="colors"></div>
+          <div class="button-row">
+            <button id="randomizeColorsBtn" title="Modeldeki blokları mevcut renklerden rastgele renklendir">Rastgele Renk</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Yapıştırma</h2>
+          <div class="segmented" id="placementModeControls">
+            <button data-placement-mode="horizontal" class="active">Yatay</button>
+            <button data-placement-mode="vertical">Dikey</button>
+            <button data-placement-mode="custom">Custom</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Kat</h2>
+          <div class="button-row">
+            <button class="icon" id="layerDownBtn" aria-label="Kat azalt">−</button>
+            <button id="layerLabel">0</button>
+            <button class="icon" id="layerUpBtn" aria-label="Kat artır">+</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Snap</h2>
+          <div class="segmented">
+            <button id="gridSnapBtn" class="active">Izgara</button>
+            <button id="magnetSnapBtn" class="active">Mıknatıs</button>
+            <button id="edgeModeBtn" class="active">Edge</button>
+            <button id="autoSymmetryBtn" title="Açıkken bloklar otomatik eşitlenir; küp yaparken kapalı tutun, üçgen köprü için açın">Auto-Align</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Şablon</h2>
+          <div class="button-row">
+            <button id="boxTemplateBtn">Kutu</button>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="viewport-shell">
+      <div id="viewport" aria-label="3D MagneticBlox sahnesi"></div>
+      <div class="hud">
+        <div class="hud-item"><span class="hud-kbd">⌥</span><span>Kamera</span></div>
+        <div class="hud-item"><span class="hud-kbd">⌫</span><span>Sil</span></div>
+        <div class="hud-item"><span class="hud-kbd">D</span><span>Çoğalt</span></div>
+        <div class="hud-item"><span class="hud-kbd">R</span><span>Döndür</span></div>
+      </div>
+      <div class="mini-map">
+        <h2>Model</h2>
+        <div class="stats">
+          <div class="stat"><strong id="blockCount">0</strong><span>Blok</span></div>
+          <div class="stat"><strong id="stepCount">0</strong><span>Step</span></div>
+          <div class="stat"><strong id="heightCount">0</strong><span>Y</span></div>
+          <div class="stat"><strong id="warnCount">0</strong><span>Uyarı</span></div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="side right">
+      <div class="scroll right-compact">
+        <section class="section preview-section">
+          <h2 class="section-title">Önizleme</h2>
+          <div class="model-preview" aria-label="Sandalye model önizlemesi">
+            <img src="assets/chair-preview.png" alt="Sandalye" />
+          </div>
+        </section>
+
+        <section class="section model-info-section">
+          <h2 class="section-title">Model Bilgisi</h2>
+          <div class="model-fields">
+            <div class="field">
+              <label for="modelName">Ad</label>
+              <input id="modelName" value="Yeni MagneticBlox Modeli" />
+            </div>
+            <div class="field">
+              <label for="category">Kategori</label>
+              <select id="category">
+                <option>Binalar</option>
+                <option>Araçlar</option>
+                <option>Hayvanlar</option>
+                <option>Geometrik</option>
+                <option>Günlük Objeler</option>
+                <option>Fantastik</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="difficulty">Zorluk</label>
+              <select id="difficulty">
+                <option>Kolay</option>
+                <option selected>Orta</option>
+                <option>Zor</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="estimatedTime">Süre</label>
+              <input id="estimatedTime" value="10 dk" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section selection-section">
+          <h2 class="section-title">Seçim</h2>
+          <div class="selection-head">
+            <div class="selected-summary" id="selectedSummary">
+              <strong>Seçili blok yok</strong>
+              <span>Sahneden bir blok seç.</span>
+            </div>
+            <div class="selection-actions">
+              <button id="autoStandBtn">Custom Dikleştir</button>
+              <button id="equalizeAnglesBtn">Açıları Eşitle</button>
+              <button id="snapOtherEdgeBtn" title="Seçili üçgenin diğer kenarını mevcut bağlı kenara yapıştır">Diğer Kenar</button>
+            </div>
+          </div>
+          <div class="selection-numbers">
+            <div class="field">
+              <label for="stepNumber">Step No</label>
+              <input id="stepNumber" type="number" min="1" step="1" value="1" />
+            </div>
+            <button id="assignStepBtn">Seçime Ata</button>
+            <div class="field">
+              <label for="posX">X</label>
+              <input id="posX" type="number" step="0.5" />
+            </div>
+            <div class="field">
+              <label for="posY">Y</label>
+              <input id="posY" type="number" step="0.5" />
+            </div>
+            <div class="field">
+              <label for="posZ">Z</label>
+              <input id="posZ" type="number" step="0.5" />
+            </div>
+            <div class="field">
+              <label for="rotX">Rot X</label>
+              <input id="rotX" type="number" step="15" />
+            </div>
+            <div class="field">
+              <label for="rotY">Rot Y</label>
+              <input id="rotY" type="number" step="15" />
+            </div>
+            <div class="field">
+              <label for="rotZ">Rot Z</label>
+              <input id="rotZ" type="number" step="15" />
+            </div>
+          </div>
+          <div class="pivot-tools">
+            <div class="field">
+              <label>Pivot</label>
+              <div class="pivot-picker" id="pivotPicker">
+                <button data-pivot="top-left" title="Sol üst pivot" aria-label="Sol üst pivot"></button>
+                <button data-pivot="top" title="Üst kenar pivot" aria-label="Üst kenar pivot"></button>
+                <button data-pivot="top-right" title="Sağ üst pivot" aria-label="Sağ üst pivot"></button>
+                <button data-pivot="left" title="Sol kenar pivot" aria-label="Sol kenar pivot"></button>
+                <button data-pivot="center" class="active" title="Merkez pivot" aria-label="Merkez pivot"></button>
+                <button data-pivot="right" title="Sağ kenar pivot" aria-label="Sağ kenar pivot"></button>
+                <button data-pivot="bottom-left" title="Sol alt pivot" aria-label="Sol alt pivot"></button>
+                <button data-pivot="bottom" title="Alt kenar pivot" aria-label="Alt kenar pivot"></button>
+                <button data-pivot="bottom-right" title="Sağ alt pivot" aria-label="Sağ alt pivot"></button>
+              </div>
+            </div>
+            <div class="pivot-options">
+              <div class="field">
+                <label>Eksen</label>
+                <div class="segmented" id="pivotAxisControls">
+                  <button data-axis="x">X</button>
+                  <button data-axis="y" class="active">Y</button>
+                  <button data-axis="z">Z</button>
+                </div>
+              </div>
+              <div class="field">
+                <label for="pivotAngle">Açı</label>
+                <input id="pivotAngle" type="number" step="15" min="1" max="180" value="15" />
+              </div>
+              <div class="pivot-pad" id="pivotPad" aria-label="Pivot yönleri">
+                <button class="icon" id="pivotTiltUpBtn" title="Yukarı çevir" aria-label="Yukarı çevir">↑</button>
+                <button class="icon" id="pivotTurnLeftBtn" title="Sola çevir" aria-label="Sola çevir">←</button>
+                <button class="icon" id="pivotTurnRightBtn" title="Sağa çevir" aria-label="Sağa çevir">→</button>
+                <button class="icon" id="pivotTiltDownBtn" title="Aşağı çevir" aria-label="Aşağı çevir">↓</button>
+                <button class="icon" id="pivotRollLeftBtn" title="Saat yönünün tersine çevir" aria-label="Saat yönünün tersine çevir">↺</button>
+                <button class="icon" id="pivotRollRightBtn" title="Saat yönünde çevir" aria-label="Saat yönünde çevir">↻</button>
+              </div>
+              <div class="button-row">
+                <button id="pivotRotateNegBtn">− Döndür</button>
+                <button id="pivotRotatePosBtn">+ Döndür</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section control-section">
+          <h2 class="section-title">Kontrol</h2>
+          <ul class="validation" id="validationList"></ul>
+        </section>
+
+        <section class="section json-section">
+          <h2 class="section-title">JSON</h2>
+          <div class="field">
+            <textarea id="jsonOutput" spellcheck="false"></textarea>
+          </div>
+          <div class="json-actions">
+            <button id="copyJsonBtn">Kopyala</button>
+            <button id="downloadJsonBtn">İndir</button>
+            <button id="importJsonBtn">İçe Al</button>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop" id="importModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+      <div class="modal-head">
+        <h2 id="importTitle">JSON İçe Al</h2>
+        <button class="icon" id="closeImportBtn" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="importText">BuildSequence JSON</label>
+          <textarea id="importText" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="cancelImportBtn">Vazgeç</button>
+        <button id="applyImportBtn" class="primary">Yükle</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="videoScanModal" aria-hidden="true">
+    <div class="modal video-scan-modal" role="dialog" aria-modal="true" aria-labelledby="videoScanTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="videoScanTitle">Videodan MagneticBlox Modeli</h2>
+          <p class="modal-subtitle">Yapım videosunu baştan sona izleyip eklenen blokları adım adım çıkarır.</p>
+        </div>
+        <button class="icon" id="closeVideoScanBtn" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body video-scan-body">
+        <section class="video-source-panel">
+          <div class="segmented video-mode-switch" id="videoScanMode" role="group" aria-label="Video analiz modu">
+            <button id="buildVideoModeBtn" class="active" type="button" data-video-scan-mode="build" aria-pressed="true">Yapımı Otomatik İzle</button>
+            <button id="guidedVideoModeBtn" type="button" data-video-scan-mode="guided" aria-pressed="false">5 Görünüş</button>
+          </div>
+          <label class="video-dropzone" id="videoDropzone" for="videoFileInput">
+            <input id="videoFileInput" type="file" accept="video/*" />
+            <strong>Video seçin veya buraya bırakın</strong>
+            <span>Sıfırdan kurulumu gösteren MP4, MOV veya tarayıcının açabildiği başka bir video · dosya cihazınızdan dışarı gönderilmez</span>
+          </label>
+
+          <div class="video-workspace" id="videoWorkspace" hidden>
+            <div class="video-stage" id="videoStage">
+              <video id="scanVideo" controls playsinline preload="metadata"></video>
+              <canvas id="scanOverlay" aria-label="Video analiz önizlemesi"></canvas>
+            </div>
+            <div class="video-meta">
+              <strong id="videoFileName">Video</strong>
+              <span id="videoFileMeta">–</span>
+            </div>
+
+            <div class="video-mode-panel build-video-panel" id="buildVideoPanel">
+              <div class="capture-help build-video-help">
+                Video sıfırdan kurulumu göstermeli. Uygulama elin çekildiği sabit anları karşılaştırır; model çevresindeki kamera dolaşımlarını kontrol bölümü olarak ayırır ve yeni adım oluşturmaz. Yeni bloğu kamera sabitken, tercihen yeniden ana açıya döndükten sonra yerleştirin.
+              </div>
+            </div>
+
+            <div class="video-mode-panel guided-capture-panel" id="guidedCapturePanel" hidden>
+              <div class="capture-help">
+                Videoyu uygun açıya getirin ve karşılık gelen görünüşü yakalayın. Model ekranı mümkün olduğunca doldurmalı; kamera yatay ve gölgesiz olmalı.
+              </div>
+              <div class="view-capture-grid" id="viewCaptureGrid">
+                <button data-capture-view="front"><span>Ön</span><small>Yakalanmadı</small></button>
+                <button data-capture-view="right"><span>Sağ</span><small>Yakalanmadı</small></button>
+                <button data-capture-view="back"><span>Arka</span><small>Yakalanmadı</small></button>
+                <button data-capture-view="left"><span>Sol</span><small>Yakalanmadı</small></button>
+                <button data-capture-view="top"><span>Üst</span><small>Yakalanmadı</small></button>
+              </div>
+              <div class="button-row video-capture-actions">
+                <button id="autoCaptureViewsBtn" title="Videonun beş eşit zamanından görünüşleri doldurur">Zamanlara Otomatik Dağıt</button>
+                <button id="clearCapturedViewsBtn">Görünüşleri Temizle</button>
+              </div>
+            </div>
+
+            <div class="button-row video-file-actions">
+              <button id="replaceVideoBtn">Başka Video Seç</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="video-settings-panel">
+          <h3>Analiz Ayarları</h3>
+          <div class="field">
+            <label for="videoColorTolerance">Renk toleransı <output id="videoColorToleranceValue">20%</output></label>
+            <input id="videoColorTolerance" type="range" min="8" max="38" step="1" value="20" />
+          </div>
+          <div class="field">
+            <label for="videoMinRegion">En küçük renk alanı</label>
+            <input id="videoMinRegion" type="number" min="12" max="5000" step="10" value="42" />
+          </div>
+          <div class="field">
+            <label for="videoSamplingFps">Örnekleme hızı <span class="label-note">kare/sn</span></label>
+            <input id="videoSamplingFps" type="number" min="0.5" max="8" step="0.5" value="2" inputmode="decimal" />
+          </div>
+          <div class="field">
+            <label for="videoPixelsPerUnit">Piksel / temel blok <span class="label-note">0 = otomatik</span></label>
+            <input id="videoPixelsPerUnit" type="number" min="0" max="1000" step="1" value="0" />
+            <button id="measureVideoScaleBtn" type="button">Kare Kenarından Ölç</button>
+          </div>
+          <div class="scan-progress" aria-live="polite">
+            <div class="scan-progress-head">
+              <span id="videoScanStatus">Video bekleniyor</span>
+              <strong id="videoScanProgressText">0%</strong>
+            </div>
+            <div class="scan-progress-track"><span id="videoScanProgressBar"></span></div>
+            <div class="scan-progress-meta" id="videoScanMeta">0:00 / 0:00 · 0 adım · 0 olay</div>
+          </div>
+          <ul class="scan-warnings" id="videoScanWarnings"></ul>
+        </aside>
+
+        <section class="video-results-panel" id="videoResultsPanel" hidden>
+          <div class="video-results-head">
+            <div>
+              <h3>Algılanan Bloklar</h3>
+              <span id="videoResultSummary">Henüz analiz edilmedi</span>
+            </div>
+            <div class="confidence-legend">
+              <span class="confidence-dot high"></span>Güçlü
+              <span class="confidence-dot medium"></span>Kontrol
+              <span class="confidence-dot low"></span>Zayıf
+            </div>
+          </div>
+          <ol class="video-timeline" id="videoTimeline" aria-label="Algılanan yapım olayları"></ol>
+          <div class="video-result-table-wrap">
+            <table class="video-result-table">
+              <thead>
+                <tr><th>#</th><th>Adım</th><th>Zaman</th><th>Tip</th><th>Renk</th><th>Yön</th><th>X</th><th>Y</th><th>Z</th><th>Güven</th><th></th></tr>
+              </thead>
+              <tbody id="videoResultRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="modal-foot video-scan-foot">
+        <span id="videoPrivacyNote">Yerel analiz · video yüklenmez</span>
+        <button id="cancelVideoScanBtn">Vazgeç</button>
+        <button id="stopVideoScanBtn" class="danger" type="button" hidden>Taramayı Durdur</button>
+        <button id="analyzeVideoBtn" class="primary" disabled>Videoyu Tara</button>
+        <button id="applyVideoResultBtn" class="primary" disabled>Sahneye Aktar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+    <script type="module" src="app.js?v=right-triangle-vertical-2"></script>
+</body>
+</html>
